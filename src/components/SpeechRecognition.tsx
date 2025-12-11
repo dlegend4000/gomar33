@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 
-const SpeechRecognition = () => {
+interface SpeechRecognitionProps {
+  onTranscriptComplete?: (transcript: string) => void;
+  onTranscriptChange?: (transcript: string) => void;
+}
+
+const SpeechRecognition = ({ onTranscriptComplete, onTranscriptChange }: SpeechRecognitionProps) => {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState("");
   const recognitionRef = useRef<any>(null);
   const isListeningRef = useRef(false);
   const textRef = useRef<HTMLDivElement>(null);
-
-  console.log(transcript);
+  const lastTranscriptRef = useRef("");
 
   useEffect(() => {
     // Initialize speech recognition
@@ -32,6 +36,12 @@ const SpeechRecognition = () => {
           currentTranscript += event.results[i][0].transcript;
         }
         setTranscript(currentTranscript);
+        lastTranscriptRef.current = currentTranscript;
+
+        // Notify parent of transcript changes
+        if (onTranscriptChange) {
+          onTranscriptChange(currentTranscript);
+        }
 
         // Scroll to show the end of the text
         if (textRef.current) {
@@ -52,6 +62,17 @@ const SpeechRecognition = () => {
         console.log("Ended");
         setIsListening(false);
         isListeningRef.current = false;
+
+        // Send final transcript to parent when recording ends
+        if (onTranscriptComplete && lastTranscriptRef.current.trim()) {
+          onTranscriptComplete(lastTranscriptRef.current.trim());
+        }
+
+        // Clear transcript after sending
+        setTimeout(() => {
+          setTranscript("");
+          lastTranscriptRef.current = "";
+        }, 500);
       };
     }
 
