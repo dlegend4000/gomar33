@@ -278,48 +278,58 @@ function App() {
 					</div>
 
 					{/* Music State Display */}
-					<div className="mt-6 space-y-3">
+					<div className="mt-6 space-y-4">
 						{isProcessing && (
-							<div className="text-center text-blue-600 dark:text-blue-400 text-sm animate-pulse">
-								🎵 Processing command...
+							<div className="text-center text-sm animate-pulse opacity-60">
+								Processing...
 							</div>
 						)}
 
 						{error && (
-							<div className="text-center text-red-600 dark:text-red-400 text-sm">
-								❌ {error}
+							<div className="text-center text-sm text-red-500 dark:text-red-400 opacity-80">
+								{error}
 							</div>
 						)}
 
 						{(playbackState === "playing" || playbackState === "paused" || playbackState === "loading") && (
-							<div className="bg-gray-100 dark:bg-gray-800 rounded-lg p-4 space-y-2">
-								<div className="text-sm font-medium text-gray-700 dark:text-gray-300 flex items-center gap-2">
-									{playbackState === "playing" && "🎵 Music Playing"}
-									{playbackState === "paused" && "⏸️ Music Paused"}
-									{playbackState === "loading" && "⏳ Loading..."}
+							<div className="space-y-3">
+								{/* Playback Controls */}
+								<div className="flex items-center justify-between text-sm opacity-60">
+									<div className="flex items-center gap-3">
+										<span className="font-mono">
+											{playbackState === "playing" && "▶"}
+											{playbackState === "paused" && "⏸"}
+											{playbackState === "loading" && "⏳"}
+										</span>
+										<span className="font-mono tracking-wider">{currentBpm} BPM</span>
+									</div>
 									<button
 										onClick={() => lyriaHelper.current?.playPause()}
-										className="ml-auto text-xs px-2 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded"
+										className="px-3 py-1 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors text-xs font-medium"
 									>
 										{playbackState === "playing" ? "Pause" : "Play"}
 									</button>
 								</div>
-								<div className="text-xs text-gray-600 dark:text-gray-400">
-									BPM: {currentBpm}
-								</div>
+
+								{/* Active Prompts */}
 								{weightedPrompts.length > 0 && (
-									<div className="space-y-1">
-										<div className="text-xs font-medium text-gray-700 dark:text-gray-300">
-											Active Prompts:
+									<div className="space-y-2">
+										<div className="text-xs font-medium opacity-40 tracking-wider uppercase">
+											Active Elements
 										</div>
-										{weightedPrompts.map((prompt, idx) => (
-											<div
-												key={idx}
-												className="text-xs text-gray-600 dark:text-gray-400 bg-blue-50 dark:bg-blue-900/20 px-2 py-1 rounded"
-											>
-												{prompt.text} (weight: {prompt.weight})
-											</div>
-										))}
+										<div className="flex flex-wrap gap-2">
+											{weightedPrompts.map((prompt, idx) => (
+												<div
+													key={idx}
+													className="px-3 py-1.5 rounded-full bg-surface-light dark:bg-surface-dark border border-gray-200 dark:border-gray-700 text-xs opacity-70 hover:opacity-100 transition-opacity"
+													style={{
+														backdropFilter: "blur(10px)",
+													}}
+												>
+													{prompt.text}
+												</div>
+											))}
+										</div>
 									</div>
 								)}
 							</div>

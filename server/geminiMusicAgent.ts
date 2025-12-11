@@ -275,17 +275,24 @@ Your job:
 Steps:
 - For tempo changes: use calculate_bpm_change() and set requires_reset=true
 - For new instruments: use get_instrument_prompt() + create_weighted_prompt()
-- For mood changes: use get_mood_prompt()
+- For mood changes: use get_mood_prompt() + create_weighted_prompt()
 - For density: use calculate_density_change()
 - For brightness: use calculate_brightness_change()
 - Return ONLY the JSON object, no explanations
 
-Example:
+Examples:
+
 User: "add some drums"
 You should:
 1. Call get_instrument_prompt("drums")
 2. Call create_weighted_prompt(result.text, 1.0)
 3. Return: {"weighted_prompts": [{"text": "Dynamic drums with crisp hits", "weight": 1.0}], "config": {}, "requires_reset": false, "action_type": "add_instrument"}
+
+User: "like mozart" or "more traditional"
+You should:
+1. Call get_mood_prompt("classical")
+2. Call create_weighted_prompt(result.text, 1.0)
+3. Return: {"weighted_prompts": [{"text": "Classical with orchestral arrangements", "weight": 1.0}], "config": {}, "requires_reset": false, "action_type": "change_mood"}
 `;
 	}
 
