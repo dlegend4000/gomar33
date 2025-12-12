@@ -26,7 +26,7 @@ firebase functions:secrets:set GOOGLE_API_KEY
 
 Then enter your API key when prompted.
 
-**Note:** Your API key is: `AIzaSyDPj7f2g1LpATBlGCo4xPfgOqasO8_wOVU`
+**Note:** Replace `YOUR_GOOGLE_API_KEY` with your actual API key from Google Cloud Console.
 
 ### For Frontend (Hosting)
 
@@ -115,8 +115,8 @@ After deployment, your app will be available at:
 ## Quick Deploy Command
 
 ```bash
-# Set API key (one time)
-firebase functions:config:set google.api_key="AIzaSyDPj7f2g1LpATBlGCo4xPfgOqasO8_wOVU"
+# Set API key (one time) - Replace YOUR_GOOGLE_API_KEY with your actual key
+firebase functions:config:set google.api_key="YOUR_GOOGLE_API_KEY"
 
 # Deploy everything
 npm run deploy:all
