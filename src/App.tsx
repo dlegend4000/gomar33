@@ -98,15 +98,15 @@ function App() {
           </div>
 
           <div className="w-full space-y-6">
-            <Waveform progress={0.3} />
+            {/*   <Waveform progress="scrolling" /> */}
 
-            <div className="text-center font-mono text-lg tracking-widest text-gray-500 dark:text-gray-400">
+            {/* <div className="text-center font-mono text-lg tracking-widest text-gray-500 dark:text-gray-400">
               <span className="text-gray-800 dark:text-white font-medium">
                 0:54
               </span>
               <span className="mx-2 opacity-50">/</span>
               <span>4:50</span>
-            </div>
+            </div> */}
           </div>
 
           <SpeechRecognition />
