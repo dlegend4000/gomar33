@@ -232,8 +232,13 @@ export class LyriaMusicHelper extends EventTarget {
 			return;
 		}
 
-		// Wait for session connection if not already connected
-		if (!this.session) {
+		// Check if session exists and is valid, or if there was a connection error
+		// If session is null or connection had an error, create a new session
+		if (!this.session || this.connectionError) {
+			// Reset session state before creating new connection
+			this.session = null;
+			this.sessionPromise = null;
+			this.connectionError = false;
 			this.session = await this.getSession();
 		}
 
@@ -256,7 +261,25 @@ export class LyriaMusicHelper extends EventTarget {
 
 			// IMPORTANT: Don't change playback state during async operation
 			// This ensures time tracking continues uninterrupted
-			await this.session.setWeightedPrompts(requestParams);
+			try {
+				await this.session.setWeightedPrompts(requestParams);
+			} catch (wsError: any) {
+				// If WebSocket is closed or in invalid state, reset and retry once
+				if (wsError.message?.includes("CLOSING") || wsError.message?.includes("CLOSED") || 
+				    wsError.message?.includes("WebSocket") || this.connectionError) {
+					console.warn("⚠️ WebSocket error, resetting connection:", wsError.message);
+					// Reset session and try again
+					this.session = null;
+					this.sessionPromise = null;
+					this.connectionError = false;
+					this.session = await this.getSession();
+					// Retry once
+					await this.session.setWeightedPrompts(requestParams);
+				} else {
+					// Re-throw if it's a different error
+					throw wsError;
+				}
+			}
 			
 			// Restore playback state and time tracking if it was playing before
 			// This ensures the timer continues counting without interruption
@@ -299,8 +322,12 @@ export class LyriaMusicHelper extends EventTarget {
 	public async play() {
 		this.setPlaybackState("loading");
 		
-		// Connect session if not already connected
-		if (!this.session) {
+		// Connect session if not already connected or if there was a connection error
+		if (!this.session || this.connectionError) {
+			// Reset session state before creating new connection
+			this.session = null;
+			this.sessionPromise = null;
+			this.connectionError = false;
 			this.session = await this.getSession();
 		}
 
@@ -308,7 +335,22 @@ export class LyriaMusicHelper extends EventTarget {
 		// This method just starts playback after session is connected
 
 		this.audioContext.resume();
-		this.session.play();
+		try {
+			this.session.play();
+		} catch (wsError: any) {
+			// If WebSocket is closed, reset and retry
+			if (wsError.message?.includes("CLOSING") || wsError.message?.includes("CLOSED") || 
+			    wsError.message?.includes("WebSocket")) {
+				console.warn("⚠️ WebSocket error on play(), resetting connection:", wsError.message);
+				this.session = null;
+				this.sessionPromise = null;
+				this.connectionError = false;
+				this.session = await this.getSession();
+				this.session.play();
+			} else {
+				throw wsError;
+			}
+		}
 		this.outputNode.connect(this.audioContext.destination);
 		this.outputNode.gain.setValueAtTime(0, this.audioContext.currentTime);
 		this.outputNode.gain.linearRampToValueAtTime(
@@ -318,7 +360,16 @@ export class LyriaMusicHelper extends EventTarget {
 	}
 
 	public pause() {
-		if (this.session) this.session.pause();
+		if (this.session) {
+			try {
+				this.session.pause();
+			} catch (wsError: any) {
+				// Ignore WebSocket errors when pausing - connection might already be closed
+				if (!wsError.message?.includes("CLOSING") && !wsError.message?.includes("CLOSED")) {
+					console.warn("⚠️ Error pausing session:", wsError.message);
+				}
+			}
+		}
 		this.setPlaybackState("paused");
 		this.outputNode.gain.setValueAtTime(1, this.audioContext.currentTime);
 		this.outputNode.gain.linearRampToValueAtTime(
@@ -330,7 +381,16 @@ export class LyriaMusicHelper extends EventTarget {
 	}
 
 	public stop() {
-		if (this.session) this.session.stop();
+		if (this.session) {
+			try {
+				this.session.stop();
+			} catch (wsError: any) {
+				// Ignore WebSocket errors when stopping - connection might already be closed
+				if (!wsError.message?.includes("CLOSING") && !wsError.message?.includes("CLOSED")) {
+					console.warn("⚠️ Error stopping session:", wsError.message);
+				}
+			}
+		}
 		this.setPlaybackState("stopped");
 		this.outputNode.gain.setValueAtTime(0, this.audioContext.currentTime);
 		this.outputNode.gain.linearRampToValueAtTime(
@@ -340,6 +400,7 @@ export class LyriaMusicHelper extends EventTarget {
 		this.nextStartTime = 0;
 		this.session = null;
 		this.sessionPromise = null;
+		this.connectionError = false;
 		this.totalPlaybackTime = 0;
 		this.playbackStartTime = 0;
 		this.stopTimeTracking();

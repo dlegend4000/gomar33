@@ -22,12 +22,12 @@ firebase functions:config:set elevenlabs.api_key="YOUR_ELEVENLABS_API_KEY"
 ### Option B: Using Environment Variables (Recommended)
 Create a `.env` file in `backend/functions/`:
 ```
-ELEVENLABS_API_KEY=sk_05687446e7899a995d6ef1d079916647a0a1eaa356f9e125
+ELEVENLABS_API_KEY=your_elevenlabs_api_key_here
 ```
 
 Or set it when deploying:
 ```bash
-firebase functions:config:set elevenlabs.api_key="sk_05687446e7899a995d6ef1d079916647a0a1eaa356f9e125"
+firebase functions:config:set elevenlabs.api_key="YOUR_ELEVENLABS_API_KEY"
 ```
 
 ## 3. Build Backend Functions
