@@ -5,7 +5,11 @@
 
 import type { MusicConfig, WeightedPrompt } from "./musicLogic";
 
-const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:3001";
+// Use Firebase Hosting URL in production (which routes to Functions), localhost in development
+const API_BASE_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.DEV 
+    ? "http://localhost:3001" 
+    : "");
 
 export interface MusicInterpretationResult {
 	weighted_prompts: WeightedPrompt[];
@@ -48,7 +52,8 @@ export async function checkHealth(): Promise<{
 	message: string;
 	timestamp: string;
 }> {
-	const response = await fetch(`${API_BASE_URL}/api/health`);
+	const url = `${API_BASE_URL}/api/health`;
+	const response = await fetch(url);
 
 	if (!response.ok) {
 		throw new Error(`Health check failed: ${response.statusText}`);
@@ -63,7 +68,8 @@ export async function checkHealth(): Promise<{
 export async function interpretVoiceCommand(
 	params: InterpretVoiceCommandParams
 ): Promise<MusicInterpretationResult> {
-	const response = await fetch(`${API_BASE_URL}/api/interpret`, {
+	const url = `${API_BASE_URL}/api/interpret`;
+	const response = await fetch(url, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -90,7 +96,8 @@ export async function interpretVoiceCommand(
 export async function interpretFirstCommand(
 	transcript: string
 ): Promise<MusicInterpretationResult> {
-	const response = await fetch(`${API_BASE_URL}/api/interpret/first`, {
+	const url = `${API_BASE_URL}/api/interpret/first`;
+	const response = await fetch(url, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",
@@ -117,7 +124,8 @@ export async function interpretFirstCommand(
 export async function interpretModifyCommand(
 	params: InterpretModifyCommandParams
 ): Promise<MusicInterpretationResult> {
-	const response = await fetch(`${API_BASE_URL}/api/interpret/modify`, {
+	const url = `${API_BASE_URL}/api/interpret/modify`;
+	const response = await fetch(url, {
 		method: "POST",
 		headers: {
 			"Content-Type": "application/json",

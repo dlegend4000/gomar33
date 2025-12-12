@@ -10,10 +10,15 @@
     "build": "npm run build:client && npm run build:server",
     "build:client": "vite build",
     "build:server": "tsc -p tsconfig.server.json",
+    "build:functions": "cd backend/functions && npm run build",
     "start": "node dist/server/index.js",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "deploy": "npm run build:client && npm run build:functions && firebase deploy",
+    "deploy:hosting": "npm run build:client && firebase deploy --only hosting",
+    "deploy:functions": "npm run build:functions && firebase deploy --only functions",
+    "deploy:all": "npm run build:client && npm run build:functions && firebase deploy"
   },
   "dependencies": {
     "@clerk/clerk-react": "^5.58.1",

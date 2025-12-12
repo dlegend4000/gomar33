@@ -120,12 +120,28 @@ div[class*="Footer"],
   width: 100%;
   overflow-x: auto;
   overflow-y: hidden;
-  padding-bottom: 60px;
-  font-size: 1.4rem;
+  padding-bottom: 40px;
+  font-size: 1rem;
   font-weight: 400;
-  min-height: 60px;
+  min-height: 40px;
   scroll-behavior: smooth;
   scrollbar-width: none; /* Firefox */
+}
+
+@media (min-width: 640px) {
+  .teleprompter-container {
+    padding-bottom: 50px;
+    font-size: 1.2rem;
+    min-height: 50px;
+  }
+}
+
+@media (min-width: 768px) {
+  .teleprompter-container {
+    padding-bottom: 60px;
+    font-size: 1.4rem;
+    min-height: 60px;
+  }
 }
 
 .teleprompter-container::-webkit-scrollbar {
@@ -171,19 +187,35 @@ div[class*="Footer"],
 
 .listening-indicator {
   position: fixed;
-  bottom: 80px;
+  bottom: 60px;
   left: 50%;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
+  gap: 6px;
+  padding: 6px 12px;
   background: rgba(239, 68, 68, 0.2);
   border: 1px solid rgba(239, 68, 68, 0.5);
   border-radius: 20px;
   pointer-events: none;
   z-index: 100;
+  font-size: 0.75rem;
+}
+
+@media (min-width: 640px) {
+  .listening-indicator {
+    bottom: 70px;
+    gap: 8px;
+    padding: 8px 16px;
+    font-size: 0.875rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .listening-indicator {
+    bottom: 80px;
+  }
 }
 
 .pulse-dot {

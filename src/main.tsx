@@ -6,12 +6,15 @@ import './index.css';
 
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
-if (!PUBLISHABLE_KEY) {
-  throw new Error("Missing Publishable Key");
-}
+// Conditional Clerk wrapper component
+function AppWrapper() {
+  if (!PUBLISHABLE_KEY) {
+    console.warn("⚠️ VITE_CLERK_PUBLISHABLE_KEY is not set - running without authentication");
+    // Render app without Clerk - Clerk components will need to handle this gracefully
+    return <App />;
+  }
 
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
+  return (
     <ClerkProvider 
       publishableKey={PUBLISHABLE_KEY}
       appearance={{
@@ -22,5 +25,11 @@ createRoot(document.getElementById('root')!).render(
     >
       <App />
     </ClerkProvider>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <AppWrapper />
   </StrictMode>
 );

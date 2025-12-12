@@ -6,13 +6,20 @@
 import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
+import { fileURLToPath } from "url";
 import {
 	interpretVoiceCommand,
 	type InterpretOptions,
-} from "./geminiMusicAgent.js";
+} from "./geminiMusicAgent";
 
-// Load environment variables
-dotenv.config();
+// Get directory path for ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load environment variables - try backend/.env.local first, then root .env
+dotenv.config({ path: path.resolve(__dirname, "../backend/.env.local") });
+dotenv.config(); // Also load root .env if it exists (won't override .env.local values)
 
 const app = express();
 const PORT = process.env.PORT || 3001;

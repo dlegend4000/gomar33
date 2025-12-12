@@ -50,17 +50,18 @@ export function AnimatedFolder({ title, projects, className, subtitle }: Animate
       <div
         className={cn(
           "relative flex flex-col items-center justify-center",
-          "p-12 rounded-2xl cursor-pointer",
+          "p-6 sm:p-8 md:p-12 rounded-2xl cursor-pointer",
           "bg-card border border-border",
           "transition-all duration-500 ease-out",
           "hover:shadow-2xl hover:shadow-accent/10",
           "hover:border-accent/30",
           "group",
+          "min-w-[280px] min-h-[320px]",
+          "sm:min-w-[360px] sm:min-h-[400px]",
+          "md:min-w-[420px] md:min-h-[480px]",
           className,
         )}
         style={{
-          minWidth: "420px",
-          minHeight: "480px",
           perspective: "1000px",
         }}
         onMouseEnter={() => setIsHovered(true)}
@@ -75,10 +76,17 @@ export function AnimatedFolder({ title, projects, className, subtitle }: Animate
           }}
         />
 
-        <div className="relative flex items-center justify-center mb-6" style={{ height: "240px", width: "300px" }}>
+        <div 
+          className={cn(
+            "relative flex items-center justify-center mb-4 sm:mb-5 md:mb-6",
+            "h-[160px] w-[200px]",
+            "sm:h-[200px] sm:w-[250px]",
+            "md:h-[240px] md:w-[300px]"
+          )}
+        >
           {/* Folder back layer - z-index 10 */}
           <div
-            className="absolute w-48 h-36 bg-folder-back rounded-lg shadow-md"
+            className="absolute w-32 h-24 sm:w-40 sm:h-30 md:w-48 md:h-36 bg-folder-back rounded-lg shadow-md"
             style={{
               transformOrigin: "bottom center",
               transform: isHovered ? "rotateX(-15deg)" : "rotateX(0deg)",
@@ -89,14 +97,10 @@ export function AnimatedFolder({ title, projects, className, subtitle }: Animate
 
           {/* Folder tab - z-index 10 */}
           <div
-            className="absolute bg-folder-tab rounded-t-md"
+            className="absolute bg-folder-tab rounded-t-md w-12 h-4 sm:w-16 sm:h-5 md:w-18 md:h-6"
             style={{
-              width: "72px",
-              height: "24px",
-            }}
-            style={{
-              top: "calc(50% - 72px - 18px)",
-              left: "calc(50% - 96px + 24px)",
+              top: "calc(50% - 48px - 12px)",
+              left: "calc(50% - 64px + 16px)",
               transformOrigin: "bottom center",
               transform: isHovered ? "rotateX(-25deg) translateY(-2px)" : "rotateX(0deg)",
               transition: "transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -133,9 +137,9 @@ export function AnimatedFolder({ title, projects, className, subtitle }: Animate
 
           {/* Folder front layer - z-index 30 */}
           <div
-            className="absolute w-48 h-36 bg-folder-front rounded-lg shadow-lg"
+            className="absolute w-32 h-24 sm:w-40 sm:h-30 md:w-48 md:h-36 bg-folder-front rounded-lg shadow-lg"
             style={{
-              top: "calc(50% - 72px + 6px)",
+              top: "calc(50% - 48px + 4px)",
               transformOrigin: "bottom center",
               transform: isHovered ? "rotateX(25deg) translateY(8px)" : "rotateX(0deg)",
               transition: "transform 500ms cubic-bezier(0.34, 1.56, 0.64, 1)",
@@ -145,9 +149,9 @@ export function AnimatedFolder({ title, projects, className, subtitle }: Animate
 
           {/* Folder shine effect - z-index 31 */}
           <div
-            className="absolute w-48 h-36 rounded-lg overflow-hidden pointer-events-none"
+            className="absolute w-32 h-24 sm:w-40 sm:h-30 md:w-48 md:h-36 rounded-lg overflow-hidden pointer-events-none"
             style={{
-              top: "calc(50% - 72px + 6px)",
+              top: "calc(50% - 48px + 4px)",
               background: "linear-gradient(135deg, rgba(255,255,255,0.3) 0%, transparent 50%)",
               transformOrigin: "bottom center",
               transform: isHovered ? "rotateX(25deg) translateY(8px)" : "rotateX(0deg)",
@@ -159,7 +163,7 @@ export function AnimatedFolder({ title, projects, className, subtitle }: Animate
 
         {/* Folder title */}
         <h3
-          className="text-2xl font-semibold text-foreground mt-6 transition-all duration-300"
+          className="text-xl sm:text-2xl font-semibold text-foreground mt-4 sm:mt-5 md:mt-6 transition-all duration-300"
           style={{
             transform: isHovered ? "translateY(4px)" : "translateY(0)",
           }}
@@ -170,7 +174,7 @@ export function AnimatedFolder({ title, projects, className, subtitle }: Animate
         {/* Subtitle */}
         {subtitle && (
           <p
-            className="text-base text-muted-foreground transition-all duration-300"
+            className="text-sm sm:text-base text-muted-foreground transition-all duration-300"
             style={{
               opacity: isHovered ? 0.7 : 1,
             }}
@@ -566,19 +570,21 @@ const ProjectCard = forwardRef<HTMLDivElement, ProjectCardProps>(
           "absolute rounded-lg overflow-hidden shadow-xl",
           "bg-card border border-border",
           "cursor-pointer hover:ring-2 hover:ring-accent/50",
+          "w-20 h-28",
+          "sm:w-[100px] sm:h-[140px]",
+          "md:w-[120px] md:h-[168px]",
+          "left-[-40px] top-[-56px]",
+          "sm:left-[-50px] sm:top-[-70px]",
+          "md:left-[-60px] md:top-[-84px]",
           isSelected && "opacity-0",
         )}
         style={{
-          width: "120px",
-          height: "168px",
           transform: isVisible
-            ? `translateY(-135px) translateX(${translations[index] * 1.5}px) rotate(${rotations[index]}deg) scale(1)`
+            ? `translateY(-90px) translateX(${translations[index] * 1.0}px) rotate(${rotations[index]}deg) scale(1)`
             : "translateY(0px) translateX(0px) rotate(0deg) scale(0.5)",
           opacity: isSelected ? 0 : isVisible ? 1 : 0,
           transition: `all 600ms cubic-bezier(0.34, 1.56, 0.64, 1) ${delay}ms`,
           zIndex: 10 - index,
-          left: "-60px",
-          top: "-84px",
         }}
         onClick={(e) => {
           e.stopPropagation()

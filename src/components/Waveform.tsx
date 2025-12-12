@@ -1,38 +1,79 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useEffect, useState } from 'react';
 
 interface WaveformProps {
   progress?: number;
 }
 
-export default function Waveform({ progress = 0.3 }: WaveformProps) {
-  const leftBars = useMemo(() => {
-    return Array.from({ length: 30 }, () => Math.floor(Math.random() * 20) + 8);
+export default function Waveform({ progress = 0 }: WaveformProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const waveformRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+  
+  const totalBars = 200; // More bars for smoother scrolling
+  const barWidth = 4;
+  const barSpacing = 1;
+  const barFullWidth = barWidth + barSpacing;
+  const totalWaveformWidth = totalBars * barFullWidth;
+  
+  const bars = useMemo(() => {
+    return Array.from({ length: totalBars }, () => Math.floor(Math.random() * 20) + 8);
   }, []);
 
-  const rightBars = useMemo(() => {
-    return Array.from({ length: 30 }, () => Math.floor(Math.random() * 20) + 8);
+  useEffect(() => {
+    const updateWidth = () => {
+      if (containerRef.current) {
+        setContainerWidth(containerRef.current.offsetWidth);
+      }
+    };
+    updateWidth();
+    window.addEventListener('resize', updateWidth);
+    return () => window.removeEventListener('resize', updateWidth);
   }, []);
+
+  // Calculate translateX to scroll waveform left as progress increases
+  const centerPosition = containerWidth / 2;
+  const translateX = centerPosition - (progress * totalWaveformWidth);
 
   return (
-    <div className="waveform-container px-4 sm:px-12 opacity-90">
-      <div className="flex items-center h-full">
-        {leftBars.map((height, index) => (
-          <div
-            key={`left-${index}`}
-            className="waveform-bar bg-white dark:bg-gray-200"
-            style={{ height: `${height}px` }}
-          />
-        ))}
-      </div>
-      <div className="h-8 w-1 bg-primary mx-1 rounded-full shadow-[0_0_10px_rgba(253,224,71,0.5)]" />
-      <div className="flex items-center h-full">
-        {rightBars.map((height, index) => (
-          <div
-            key={`right-${index}`}
-            className="waveform-bar bg-gray-300 dark:bg-gray-600 opacity-50"
-            style={{ height: `${height}px` }}
-          />
-        ))}
+    <div 
+      ref={containerRef}
+      className="waveform-container relative h-12 sm:h-14 md:h-16 w-full overflow-hidden opacity-90"
+    >
+      {/* Fixed yellow cursor line in center */}
+      <div className="absolute top-0 bottom-0 left-1/2 w-[2px] bg-yellow-500 z-10" 
+        style={{ transform: 'translateX(-50%)' }} 
+      />
+      
+      {/* Scrolling waveform */}
+      <div className="flex items-center justify-center h-full relative w-full">
+        <div 
+          ref={waveformRef}
+          className="flex items-center h-full absolute"
+          style={{ 
+            transform: `translateX(${translateX}px)`,
+            transition: 'transform 75ms ease-linear',
+            width: `${totalWaveformWidth}px`
+          }}
+        >
+          {bars.map((height, index) => {
+            const isActive = index < progress * totalBars;
+            return (
+              <div
+                key={`bar-${index}`}
+                className={`waveform-bar transition-all duration-75 ${
+                  isActive 
+                    ? "bg-white dark:bg-gray-200" 
+                    : "bg-gray-300 dark:bg-gray-600 opacity-50"
+                }`}
+                style={{ 
+                  height: `${height}px`, 
+                  width: `${barWidth}px`,
+                  margin: `0 ${barSpacing / 2}px`
+                }}
+              />
+            );
+          })}
+        </div>
       </div>
     </div>
   );

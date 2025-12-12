@@ -6,11 +6,8 @@
 
 // ============================================================================
 // Type Definitions
-// Re-exported from shared types for frontend compatibility
 // ============================================================================
 
-// Note: Types are now in shared/types.ts, but we re-export them here
-// for backward compatibility with existing frontend imports
 export interface WeightedPrompt {
 	text: string;
 	weight: number; // Cannot be 0, 1.0 is default

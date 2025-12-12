@@ -42,6 +42,9 @@ export class LyriaMusicHelper extends EventTarget {
 
 	private currentPrompts: WeightedPrompt[] = [];
 	private currentConfig: MusicConfig = {};
+	private playbackStartTime: number = 0;
+	private totalPlaybackTime: number = 0;
+	private timeUpdateInterval: number | null = null;
 
 	constructor(apiKey: string) {
 		super();
@@ -61,16 +64,20 @@ export class LyriaMusicHelper extends EventTarget {
 		this.sessionPromise = genAI.live.music.connect({
 			model: "lyria-realtime-exp",
 			callbacks: {
-				onmessage: async (e: LyriaServerMessage) => {
+				onmessage: async (e: any) => {
+					// Handle setup complete
 					if (e.setupComplete) {
 						this.connectionError = false;
 					}
+					// Handle filtered prompts
 					if (e.filteredPrompt) {
-						this.filteredPrompts.add(e.filteredPrompt.text || "");
+						const filteredText = e.filteredPrompt.text || "";
+						this.filteredPrompts.add(filteredText);
 						this.dispatchEvent(
 							new CustomEvent("filtered-prompt", { detail: e.filteredPrompt })
 						);
 					}
+					// Handle audio chunks
 					if (e.serverContent?.audioChunks) {
 						await this.processAudioChunks(e.serverContent.audioChunks);
 					}
@@ -104,6 +111,51 @@ export class LyriaMusicHelper extends EventTarget {
 		this.dispatchEvent(
 			new CustomEvent("playback-state-changed", { detail: state })
 		);
+
+		// Track playback time
+		if (state === "playing") {
+			if (this.playbackStartTime === 0) {
+				this.playbackStartTime = this.audioContext.currentTime;
+			}
+			this.startTimeTracking();
+		} else if (state === "paused") {
+			if (this.playbackStartTime > 0) {
+				this.totalPlaybackTime += this.audioContext.currentTime - this.playbackStartTime;
+				this.playbackStartTime = 0;
+			}
+			this.stopTimeTracking();
+		} else if (state === "stopped") {
+			this.totalPlaybackTime = 0;
+			this.playbackStartTime = 0;
+			this.stopTimeTracking();
+		}
+	}
+
+	private startTimeTracking() {
+		if (this.timeUpdateInterval) return;
+		
+		this.timeUpdateInterval = window.setInterval(() => {
+			if (this.playbackState === "playing" && this.playbackStartTime > 0) {
+				const currentTime = this.totalPlaybackTime + (this.audioContext.currentTime - this.playbackStartTime);
+				this.dispatchEvent(
+					new CustomEvent("playback-time-updated", { detail: currentTime })
+				);
+			}
+		}, 100); // Update every 100ms
+	}
+
+	private stopTimeTracking() {
+		if (this.timeUpdateInterval) {
+			clearInterval(this.timeUpdateInterval);
+			this.timeUpdateInterval = null;
+		}
+	}
+
+	public getCurrentTime(): number {
+		if (this.playbackState === "playing" && this.playbackStartTime > 0) {
+			return this.totalPlaybackTime + (this.audioContext.currentTime - this.playbackStartTime);
+		}
+		return this.totalPlaybackTime;
 	}
 
 	private async processAudioChunks(audioChunks: LyriaAudioChunk[]) {
@@ -142,6 +194,24 @@ export class LyriaMusicHelper extends EventTarget {
 		prompts: WeightedPrompt[],
 		config?: MusicConfig
 	) {
+		// Validate prompts first
+		if (!prompts || prompts.length === 0) {
+			this.dispatchEvent(
+				new CustomEvent("error", {
+					detail: "No prompts provided. Please provide at least one prompt.",
+				})
+			);
+			return;
+		}
+
+		// Preserve current playback state and time tracking before updating prompts
+		const wasPlaying = this.playbackState === "playing";
+		const wasPaused = this.playbackState === "paused";
+		// Preserve time tracking state - don't let it reset during modification
+		// If we're playing, save the current time to ensure continuity
+		const timeBeforeUpdate = wasPlaying ? this.getCurrentTime() : 0;
+		const hadActiveTimeTracking = wasPlaying && this.playbackStartTime > 0;
+
 		this.currentPrompts = prompts;
 		if (config) {
 			this.currentConfig = { ...this.currentConfig, ...config };
@@ -155,15 +225,17 @@ export class LyriaMusicHelper extends EventTarget {
 		if (activePrompts.length === 0) {
 			this.dispatchEvent(
 				new CustomEvent("error", {
-					detail: "There needs to be at least one active prompt to play.",
+					detail: "There needs to be at least one active prompt to play. All prompts were filtered or have weight 0.",
 				})
 			);
 			this.pause();
 			return;
 		}
 
-		// Don't send if we haven't connected yet
-		if (!this.session) return;
+		// Wait for session connection if not already connected
+		if (!this.session) {
+			this.session = await this.getSession();
+		}
 
 		try {
 			const requestParams: any = {
@@ -182,7 +254,40 @@ export class LyriaMusicHelper extends EventTarget {
 				requestParams.temperature = config.temperature;
 			if (config?.scale) requestParams.scale = config.scale;
 
+			// IMPORTANT: Don't change playback state during async operation
+			// This ensures time tracking continues uninterrupted
 			await this.session.setWeightedPrompts(requestParams);
+			
+			// Restore playback state and time tracking if it was playing before
+			// This ensures the timer continues counting without interruption
+			if (wasPlaying) {
+				// If time tracking was interrupted (state changed or startTime reset), restore it
+				if (this.playbackStartTime === 0 && hadActiveTimeTracking) {
+					// Time tracking was stopped during the async operation, restore it
+					// Calculate elapsed time during the operation
+					const elapsedTime = this.audioContext.currentTime - (this.totalPlaybackTime > 0 ? this.totalPlaybackTime : 0);
+					this.totalPlaybackTime = timeBeforeUpdate;
+					this.playbackStartTime = this.audioContext.currentTime;
+				} else if (this.playbackStartTime === 0 && this.totalPlaybackTime === 0) {
+					// No time tracking at all, start from preserved time
+					this.totalPlaybackTime = timeBeforeUpdate;
+					this.playbackStartTime = this.audioContext.currentTime;
+				}
+				// If playbackStartTime > 0, time tracking is still active, no need to change
+				
+				// CRITICAL: Ensure state is "playing" and time tracking is active
+				// This ensures the timer continues counting
+				if (this.playbackState !== "playing") {
+					// State changed during async operation, restore it
+					this.setPlaybackState("playing");
+				} else {
+					// State is still playing, just ensure time tracking interval is running
+					this.startTimeTracking();
+				}
+			} else if (wasPaused && this.playbackState !== "paused") {
+				// If we were paused, ensure we stay paused
+				this.setPlaybackState("paused");
+			}
 		} catch (e: any) {
 			this.dispatchEvent(
 				new CustomEvent("error", { detail: e.message || "Failed to set prompts" })
@@ -193,12 +298,14 @@ export class LyriaMusicHelper extends EventTarget {
 
 	public async play() {
 		this.setPlaybackState("loading");
-		this.session = await this.getSession();
-
-		// Set initial prompts and config
-		if (this.currentPrompts.length > 0) {
-			await this.setWeightedPrompts(this.currentPrompts, this.currentConfig);
+		
+		// Connect session if not already connected
+		if (!this.session) {
+			this.session = await this.getSession();
 		}
+
+		// Note: Prompts should be set before calling play() via setWeightedPrompts()
+		// This method just starts playback after session is connected
 
 		this.audioContext.resume();
 		this.session.play();
@@ -233,6 +340,9 @@ export class LyriaMusicHelper extends EventTarget {
 		this.nextStartTime = 0;
 		this.session = null;
 		this.sessionPromise = null;
+		this.totalPlaybackTime = 0;
+		this.playbackStartTime = 0;
+		this.stopTimeTracking();
 	}
 
 	public async playPause() {
