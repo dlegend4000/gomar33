@@ -12,7 +12,7 @@ The Google API key is visible in WebSocket connections because the Google GenAI 
 
 1. **Go to Google Cloud Console**
    - Visit: https://console.cloud.google.com/apis/credentials
-   - Find your API key: `AIzaSyBHs5rrDMZOHTqGRKf-U81846ZJEF362Ww`
+   - Find your API key in the credentials list
 
 2. **Click on the API key to edit it**
 

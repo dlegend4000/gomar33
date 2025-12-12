@@ -1,7 +1,7 @@
 # Step-by-Step: Restrict Your Google API Key
 
 ## Your API Key
-**Key:** `AIzaSyBHs5rrDMZOHTqGRKf-U81846ZJEF362Ww`
+**Key:** `YOUR_GOOGLE_API_KEY_HERE`
 
 ## Steps to Restrict It
 
@@ -9,7 +9,7 @@
 Go to: **https://console.cloud.google.com/apis/credentials**
 
 ### 2. Find Your API Key
-- Look for the key: `AIzaSyBHs5rrDMZOHTqGRKf-U81846ZJEF362Ww`
+- Look for your API key in the credentials list
 - Click on it to edit
 
 ### 3. Set Application Restrictions
