@@ -32,6 +32,7 @@ function App() {
   const clerkAvailable = isClerkAvailable();
   const [darkMode, setDarkMode] = useState(false);
 	const [isRecording, setIsRecording] = useState(false);
+	const [isMobile, setIsMobile] = useState(false);
 
 	// Music state
 	const [playbackState, setPlaybackState] = useState<PlaybackState>("stopped");
@@ -46,13 +47,9 @@ function App() {
 
 	// Initialize Lyria helper
 	useEffect(() => {
-		const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
-		if (!apiKey) {
-			console.warn("⚠️ VITE_GOOGLE_API_KEY is not set - Lyria playback will not work");
-			return;
-		}
-
-		const helper = new LyriaMusicHelper(apiKey);
+		// API key is now fetched from backend, not from env vars
+		// This keeps the key out of the frontend bundle
+		const helper = new LyriaMusicHelper();
 
 		// Listen for playback state changes
 		helper.addEventListener("playback-state-changed", ((e: Event) => {
@@ -94,6 +91,18 @@ function App() {
 			document.documentElement.classList.remove("dark");
     }
   }, [darkMode]);
+
+	// Detect mobile devices
+	useEffect(() => {
+		const checkMobile = () => {
+			const isMobileDevice = window.innerWidth < 768 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+			setIsMobile(isMobileDevice);
+		};
+		
+		checkMobile();
+		window.addEventListener("resize", checkMobile);
+		return () => window.removeEventListener("resize", checkMobile);
+	}, []);
 
 	useEffect(() => {
 		const handleKeyDown = (e: KeyboardEvent) => {
@@ -282,6 +291,13 @@ function App() {
       <main className="flex-grow flex flex-col items-center justify-center w-full max-w-2xl relative px-2 sm:px-4">
 				{clerkAvailable ? (
 					<SignedIn>
+					{isMobile && (
+						<div className="w-full max-w-md mb-4 px-4 py-3 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-300 dark:border-yellow-700 rounded-lg text-center">
+							<p className="text-sm sm:text-base text-yellow-800 dark:text-yellow-200 font-medium">
+								Not optimised for mobile yet, use laptop
+							</p>
+						</div>
+					)}
 					<div className="w-48 h-48 sm:w-56 sm:h-56 md:w-64 md:h-64 mb-4 sm:mb-6 md:mb-8">
 						<VoicePoweredOrb
 							enableVoiceControl={isRecording}

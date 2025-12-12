@@ -24,6 +24,10 @@
         "function": "interpretModify"
       },
       {
+        "source": "/api/lyria/connection",
+        "function": "lyriaConnection"
+      },
+      {
         "source": "**",
         "destination": "/index.html"
       }

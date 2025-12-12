@@ -154,3 +154,41 @@ export const interpretModify = functions.https.onRequest(async (req, res) => {
 		}
 	});
 });
+
+// Lyria connection endpoint - returns API key for client connection
+// Note: This still exposes the key, but it's better than bundling it in the frontend
+// For true security, implement a WebSocket proxy (requires Cloud Run or separate server)
+export const lyriaConnection = functions.https.onRequest(async (req, res) => {
+	return corsHandler(req, res, async () => {
+		try {
+			// Get API key from environment/Firebase config
+			const apiKey = process.env.GOOGLE_API_KEY || 
+				(process.env as any).GOOGLE_API_KEY_SECRET ||
+				(require("firebase-functions").config().google?.api_key);
+
+			if (!apiKey) {
+				return res.status(500).json({
+					success: false,
+					error: "Configuration Error",
+					message: "GOOGLE_API_KEY is not configured",
+				});
+			}
+
+			// Return the API key (client will use it to connect)
+			// TODO: For better security, implement a WebSocket proxy server
+			return res.json({
+				success: true,
+				apiKey: apiKey,
+				// Include expiration or other security measures if needed
+			});
+		} catch (error: any) {
+			console.error("Error getting Lyria connection:", error);
+
+			return res.status(500).json({
+				success: false,
+				error: "Internal Server Error",
+				message: error.message || "Failed to get connection info",
+			});
+		}
+	});
+});

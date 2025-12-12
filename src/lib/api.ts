@@ -5,11 +5,9 @@
 
 import type { MusicConfig, WeightedPrompt } from "./musicLogic";
 
-// Use Firebase Hosting URL in production (which routes to Functions), localhost in development
-const API_BASE_URL = import.meta.env.VITE_API_URL || 
-  (import.meta.env.DEV 
-    ? "http://localhost:3001" 
-    : "");
+// Always use relative URLs - Firebase Hosting rewrites handle /api/* routes to Firebase Functions
+// This works for both local development (if backend is running) and production
+const API_BASE_URL = import.meta.env.VITE_API_URL || "";
 
 export interface MusicInterpretationResult {
 	weighted_prompts: WeightedPrompt[];

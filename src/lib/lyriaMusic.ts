@@ -27,7 +27,8 @@ interface LyriaServerMessage {
 }
 
 export class LyriaMusicHelper extends EventTarget {
-	private apiKey: string;
+	private apiKey: string | null = null;
+	private apiKeyPromise: Promise<string> | null = null;
 	private session: any | null = null;
 	private sessionPromise: Promise<any> | null = null;
 
@@ -46,11 +47,48 @@ export class LyriaMusicHelper extends EventTarget {
 	private totalPlaybackTime: number = 0;
 	private timeUpdateInterval: number | null = null;
 
-	constructor(apiKey: string) {
+	constructor(apiKey?: string) {
 		super();
-		this.apiKey = apiKey;
+		// If API key is provided (for backward compatibility), use it
+		// Otherwise, fetch from backend
+		if (apiKey) {
+			this.apiKey = apiKey;
+		}
 		this.audioContext = new AudioContext({ sampleRate: 48000 });
 		this.outputNode = this.audioContext.createGain();
+	}
+
+	private async getApiKey(): Promise<string> {
+		// If we already have the API key, return it
+		if (this.apiKey) {
+			return this.apiKey;
+		}
+
+		// If we're already fetching, wait for that
+		if (this.apiKeyPromise) {
+			return this.apiKeyPromise;
+		}
+
+		// Fetch API key from backend
+		this.apiKeyPromise = (async () => {
+			try {
+				const API_BASE_URL = import.meta.env.VITE_API_URL || "";
+				const response = await fetch(`${API_BASE_URL}/api/lyria/connection`);
+				const data = await response.json();
+
+				if (!response.ok || !data.success || !data.apiKey) {
+					throw new Error(data.message || "Failed to get API key from backend");
+				}
+
+				this.apiKey = data.apiKey;
+				return this.apiKey;
+			} catch (error: any) {
+				this.apiKeyPromise = null; // Reset on error so we can retry
+				throw new Error(`Failed to fetch API key: ${error.message}`);
+			}
+		})();
+
+		return this.apiKeyPromise;
 	}
 
 	private async getSession(): Promise<any> {
@@ -59,7 +97,9 @@ export class LyriaMusicHelper extends EventTarget {
 	}
 
 	private async connect(): Promise<any> {
-		const genAI = new GoogleGenAI({ apiKey: this.apiKey, apiVersion: 'v1alpha' });
+		// Get API key (fetch from backend if not already set)
+		const apiKey = await this.getApiKey();
+		const genAI = new GoogleGenAI({ apiKey: apiKey, apiVersion: 'v1alpha' });
 
 		this.sessionPromise = genAI.live.music.connect({
 			model: "lyria-realtime-exp",

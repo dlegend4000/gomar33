@@ -31,13 +31,8 @@ export function MusicAgentDemo() {
 
 	// Initialize Lyria helper
 	useEffect(() => {
-		const apiKey = import.meta.env.VITE_GOOGLE_API_KEY;
-		if (!apiKey) {
-			setError("VITE_GOOGLE_API_KEY is not set in environment variables");
-			return;
-		}
-
-		const helper = new LyriaMusicHelper(apiKey);
+		// API key is now fetched from backend, not from env vars
+		const helper = new LyriaMusicHelper();
 
 		// Listen for playback state changes
 		helper.addEventListener("playback-state-changed", ((e: Event) => {
